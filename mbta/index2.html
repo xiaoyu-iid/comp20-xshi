@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+
+<html>
+
+	<head>
+		<title>MBTA</title>
+		<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+		<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCavSkSRrFjuf_DSt0FAQ6P_uHiRF3C_Kc"></script>
+		<link rel="stylesheet" href="style.css" />
+		
+		<script>
+			var myLat = 0;
+			var myLng = 0;
+			var request = new XMLHttpRequest();
+			var me = new google.maps.LatLng(myLat, myLng);
+			var myOptions = {
+						zoom: 13, // The larger the zoom number, the bigger the zoom
+						center:me,
+						mapTypeId: google.maps.MapTypeId.ROADMAP
+					};
+			
+			var map;
+			var myMarker;
+			var infowindow = new google.maps.InfoWindow();
+			var nearestDistance;
+			var nearestName;
+			var nearestLat;
+			var nearestLng;
+			var seconds;
+			var minutes;
+			var distanceArray = [];
+			var redlineArray = [
+                  	["Alewife", 42.395428, -71.142483],
+                  	["Davis",  42.39674, -71.121815],
+                  	["Porter Square",  42.3884, -71.11914899999999],
+                  	["Havard Sqaure",  42.373362, -71.118956],
+                  	["Central Square",  42.365486, -71.103802],
+                  	["Kendall/MIT",  42.36249079, -71.08617653],
+                  	["Charles/MGH", 42.361166, -71.070628],
+                  	["Park Street",  42.35639457, -71.0624242],
+                  	["Downtown Crossing",  42.355518, -71.060225],
+                  	["South Station", 42.352271, -71.05524200000001],
+                  	["Broadway",  42.342622, -71.056967],
+                  	["Andrew", 42.330154, -71.057655],
+                  	["JFK/UMass",  42.320685, -71.052391],
+                  	["Savin Hill",  42.31129, -71.053331],
+                  	["Fields Corner",  42.300093, -71.061667],
+                  	["Shawmut", 42.29312583, -71.06573796000001],
+                  	["Ashmont",  42.284652, -71.06448899999999],
+                  	["North Quincy", 42.275275,  -71.029583],
+                  	["Wollaston", 42.2665139, -71.0203369],
+                  	["Quincy Center", 42.251809,  -71.005409],
+                  	["Quincy Adams", 42.233391,  -71.007153],
+                  	["Braintree", 42.2078543,  -71.0011385],
+          		];
+			function init()
+			{
+				//NOTICE
+				console.log('init');
+				map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+				getMyLocation();
+			}
+			
+			function getMyLocation() {
+				// check if the navigator.geolocation object is supported on your browser
+				if (navigator.geolocation) { 
+					navigator.geolocation.getCurrentPosition(function(position) {
+						myLat = position.coords.latitude;
+						myLng = position.coords.longitude;
+						request.open("GET","https://rocky-taiga-26352.herokuapp.com/redline.json", true);
+						request.send(null);
+						request.onreadystatechange = callme; 
+					});
+				}
+				else {
+					alert("Geolocation is not supported by your web browser. What a shame!");
+				}
+			}
+			function callme(){
+				if(request.readyState == 4 && request.status == 200){
+					var theScheduleData = JSON.parse(request.responseText);
+						
+					for(var i = redlineArray.length-1; i >=0; i--){
+						var stationName = redlineArray[i][0];
+				    		var stationPositionLat = redlineArray[i][1];
+            					var stationPositionLng = redlineArray[i][2];
+						var stationPosition = new google.maps.LatLng(stationPositionLat,stationPositionLng);
+						var stationImage = "mbta.png";
+						var stationMarker = new google.maps.Marker({
+						    position: stationPosition,
+						    icon: stationImage,
+						});
+						var AlewifeMinutesArray = [];
+						var AshmontMinutesArray = [];
+						var BraintreeMinutesArray = [];
+				
+						for (var j = 0; j < theScheduleData["TripList"]["Trips"].length; j++) {
+							for (var k = 0; k < theScheduleData["TripList"]["Trips"][j]["Predictions"].length; k++){
+		    						if (theScheduleData["TripList"]["Trips"][j]["Predictions"][k]["Stop"] == stationName){
+           								if (theScheduleData["TripList"]["Trips"][j]["Destination"] == "Alewife"){
+            									seconds = theScheduleData["TripList"]["Trips"][j]["Predictions"][k]["Seconds"];
+            									minutes = (seconds/60).toFixed(0);
+            									AlewifeMinutesArray.push(minutes); 
+									}
+									else if (theScheduleData["TripList"]["Trips"][j]["Destination"] == "Ashmont"){
+										seconds = theScheduleData["TripList"]["Trips"][j]["Predictions"][k]["Seconds"];
+            									minutes = (seconds/60).toFixed(0);
+            									AshmontMinutesArray.push(minutes);
+									}
+									else if (theScheduleData["TripList"]["Trips"][j]["Destination"] == "Braintree"){
+										seconds = theScheduleData["TripList"]["Trips"][j]["Predictions"][k]["Seconds"];
+            									minutes = (seconds/60).toFixed(0);
+            									BraintreeMinutesArray.push(minutes);
+									}
+								}
+							}
+						}
+						stationMarker.content = "<h1><b>" + stationName + " Red Line Schedule" 
+									+ "</b></h1>" + "<p>" + "The next red line train to Alewife will come in " 
+									+ AlewifeMinutesArray + " minutes. <br> The next red line train to Ashmont will come in " 
+									+ AshmontMinutesArray + " minutes. <br> The next red line train to Braintree will come in " 
+									+ BraintreeMinutesArray + " minutes. </p>";
+                        			stationMarker.setMap(map);
+                    
+                				// open info window on click of marker
+                				google.maps.event.addListener(stationMarker, 'click', function() {
+                					infowindow.close();
+                					infowindow.setContent(this.content);
+                    					infowindow.open(map, this);
+				    		});           	
+        				 }
+		
+                			// Ashmont line (Alewife - Ashmont)
+					var AshmontLine = [
+                  				{/*'Alewife',*/ lat: 42.395428,lng: -71.142483},
+                  				{/*'Davis',*/  lat:42.39674, lng:-71.121815},
+                  				{/*'Porter Square',*/  lat:42.3884, lng:-71.11914899999999},
+                  				{/*'Havard Sqaure',*/  lat:42.373362, lng:-71.118956},
+                  				{/*'Central Square',*/  lat:42.365486, lng:-71.103802},
+                  				{/*'Kendall/MIT',*/  lat:42.36249079, lng:-71.08617653},
+                  				{/*'Charles/MGH',*/  lat:42.361166, lng:-71.070628},
+                  				{/*'Park Street',*/  lat:42.35639457, lng:-71.0624242},
+                  				{/*'Downtown Crossing',*/  lat:42.355518, lng:-71.060225},
+                  				{/*'South Station',*/  lat:42.352271, lng:-71.05524200000001},
+                  				{/*'Broadway',*/  lat:42.342622, lng:-71.056967},
+                  				{/*'Andrew',*/  lat:42.330154, lng:-71.057655},
+                  				{/*'JFK/UMass',*/  lat:42.320685, lng:-71.052391},
+                  				{/*'Savin Hill',*/  lat:42.31129, lng:-71.053331},
+                  				{/*'Fields Corner',*/  lat:42.300093,lng: -71.061667},
+                  				{/*'Shawmut',*/  lat:42.29312583, lng:-71.06573796000001},
+                  				{/*'Ashmont',*/  lat:42.284652, lng:-71.06448899999999},
+          				];
+        				var Ashmont = new google.maps.Polyline({
+            					path: AshmontLine,
+            					strokeColor: '#FF0000',
+            					strokeOpacity: 1.0,
+            					strokeWeight: 10
+        				});
+        				Ashmont.setMap(map);
+        				//Braintree branch(JFK - Braintree)
+        				var BraintreeLine = [
+            					{/*'JFK/UMass',*/lat: 42.320685, lng: -71.052391},
+            					{/*'North Quincy',*/lat: 42.275275, lng: -71.029583},
+            					{/*'Wollaston',*/lat: 42.2665139, lng:-71.0203369},
+            					{/*'Quincy Center',*/lat: 42.251809, lng: -71.005409},
+            					{/*'Quincy Adams',*/lat: 42.233391, lng: -71.007153},
+            					{/*'Braintree',*/lat: 42.2078543, lng: -71.0011385},
+        				];
+            
+        				var Braintree = new google.maps.Polyline({
+            					path: BraintreeLine,
+            					strokeColor: '#FF0000',
+            					strokeOpacity: 1.0,
+            					strokeWeight: 10
+        				});
+        				Braintree.setMap(map);
+        	
+        				renderMe();
+				}
+			}
+			
+			function renderMe()
+			{
+				me = new google.maps.LatLng(myLat, myLng);
+				map.panTo(me);
+	
+				myMarker = new google.maps.Marker({
+					position: me,
+					title: "Here I Am!",
+				});
+				myMarker.setMap(map);
+				for(var i = 0; i < redlineArray.length; i++){
+					var stationPositionLat = redlineArray[i][1];
+					var stationPositionLng = redlineArray[i][2];
+					var distance = getDistance(stationPositionLat, stationPositionLng, myLat, myLng).toFixed(2);  
+					distanceArray.push(distance);
+				}
+				
+				var index = 0;
+				for(var i = 1; i < distanceArray.length; i++){
+					if(distanceArray[i] < distanceArray[index]){
+						index = i;
+					}
+				}
+				nearestName = redlineArray[index][0];
+				nearestDistance = distanceArray[index];
+				nearestLat = redlineArray[index][1];
+				nearestLng = redlineArray[index][2];
+				
+				var contentString = "<h1>" + "Welcome stranger!"+ "</h1>"
+				                     + "<p>" + "The nearest red line station is " 
+				                     + nearestName 
+				                     + ", which is " 
+				                     + nearestDistance 
+				                     + " miles away." + "</p>";
+				var infowindow = new google.maps.InfoWindow({
+					content: contentString
+				}); 
+					
+				google.maps.event.addListener(myMarker, 'click', function() {
+					infowindow.open(map, myMarker);
+					// Connecting user to the nearest station 
+					var flightPathCoordinates = [
+					    {lat: myLat, lng: myLng},
+					    {lat: nearestLat, lng: nearestLng},
+					];
+					flightPath = new google.maps.Polyline({
+						path: flightPathCoordinates,
+						strokeColor: '#000000',
+						strokeOpacity: 1.0,
+						strokeWeight: 5 
+					});
+					flightPath.setMap(map);
+				});
+			}
+			function getRad(deg) {
+				return deg * (Math.PI/180);
+			}
+            		//haversine formula 
+			function getDistance (lat1, lng1, lat2, lng2) {
+				var R = 3959;   // mile
+				var dLat = getRad(lat2-lat1);  
+				var dLon = getRad(lng2-lng1);  
+				var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(getRad(lat1)) * Math.cos(getRad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2);
+				var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+				var d = R * c; 
+				return d;
+			}
+		</script>
+	</head>
+	
+	<body onload="init()">
+		<div id="map_canvas"></div>
+	</body>
+</html>

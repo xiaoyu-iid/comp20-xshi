@@ -1,0 +1,101 @@
+<!DOCTYPE HTML>
+
+<html>
+<head>
+	<title>Security and Privacy Assessment of Assignment 3</title>
+	<meta charset=utf-8 />
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+	<h1>Security Analysis of Mar Freeman&#39;s 2048 Game Center</h1>
+	<p>Xiaoyu Shi</p>
+	<p>Dec.6, 2016</p>
+
+	<div id="content">
+
+	<h2>Introduction</h2>
+
+	<p>This document assesses the security of the <a href="https://afternoon-refuge-73840.herokuapp.com/">2048 Game Center</a> developed by Mar Freeman.</p>
+	<p>The Webcenter saves scores for the game <A href="http://gabrielecirulli.github.io/2048/"> 2048 </A> created by <A href="http://gabrielecirulli.com/"> Gabrielle Cirulli </A>, and allows submission from various domains. The Webcenter also provides JSON API that can be used to get the scores, grid, and timestamp of certain users. However, while the Webcenter is being used, it has been shown that the Webcenter is not secure, and can be easily tampered with given its vulnerabilities. </p>
+	<p>I was assigned to identify security vulnerabilities in the application and therefore suggest solutions. I am responsible for black-box testing and manual code review of this application. During which time, I have found several vulnerabilities in Cross-Site Scripting, NoSQL Injections, Improper Input Validation, and Overly Permissive Cross-domain Whitelist. This assessment will address these vulnerabilities respectively. </p>
+
+	<h2>Methodology</h2>
+	<p>Initially, I performed black-box testing using curl and NoSQL injections. Afterwards, I reviewed the code in order to identify other security or privacy risks.</p>
+
+	<h2>Abstract of Findings</h2>
+	<p> The 2048 Game Center trusts its user too much. The application does not check if user inputs meet its requirements, so that if a user want to add unnecessary data or viruses onto our application, it can easily be done. Also, user information security is not guaranteed because there are ways for a user to view all user information in the database. Users can also put fake scores into the system so that fairness of the Game Center is impaired.</p>
+
+	<h2>Issues Found</h2>
+	<ol>
+		<li><span class="bold">Cross-Site Scripting</span>
+			<ul>
+				<li>Affects POST /submit.json API</li>
+				<li>CWE ID: 79; Threat: high to very high</li>
+				<li>Data submitted via POST /submit.json is not sanitized and can include Javascript or HTML in place of the submitted message. This vulnerability allows users to perform JavaScript insertion, so that there might be misrepresentation of data and directs to other websites.</li>
+				<li>For example, running the following command will redirect the page to google.com.
+					<div><img src="xss-code.png" alt="Cross-Site Scripting code" />
+					<div><img src="xss-result-1.png" alt="Cross-Site Scripting result step 1" />
+					<div><img src="xss-result-2.png" alt="Cross-Site Scripting result step 2, redirect to Google" />
+				</li>
+				<li><b>Resolution:</b> This issue can be resolved by sanitizing user input before it is saved to the database. The simplist way is to drop special characters like script tags. Also you could use a third-party library like <a href="https://github.com/yahoo/xss-filters"> Yahoo&#39;s Secure XSS Filters</a>.</li>
+			</ul>
+		</li>
+
+
+		<li><span class="bold">NoSQL Injections</span>
+			<ul>
+				<li>Affects GET /scores.json API</a></li>
+				<li>CWE ID: 943 (Improper Neutralization of Special Elements in Data Query Logic); Threat: high to very high</li>
+				<li>The vulnerability allows all user information in MongoDB unguarded. The attacker can access to all records that is not encrypted in the first place, which, in this case, are usernames and their score and grid information. <b>Inspired by Ming Chow&#39;s talk on NoSQL injection at DEFCON.</b></li>
+				<li>By adding [$ne] to the query string, which means all records are selected, a simple MongoDB injection is performed. In this way, an intruder can see all the records in te current database (I only inserted two in the local DB)
+					<div><img src="nosql.png" alt="NoSQL injection into MongoDB" />
+				}
+				</li>
+				<li><b>Resolution:</b>This issue can be resolved by accessing MongoDB after further validation steps, instead of using values taken directly from user input. For example:
+					<pre><code>
+					if (request.query.username) {
+						collection.find( { &#39;username&#39; : sanitize(request.query.username) });
+						//manipulate...
+					}
+					</code></pre>
+				</li>
+			</ul>
+		</li>
+
+		
+		<li><span class="bold">Overly Permissive Cross-domain Whitelist</span>
+			<ul>
+				<li>Affects POST /submit.json API</li>
+				<li>CWE ID: 942; threat: medium to high</li>
+				<li>Upon doing a manual code review, I have found out about his response headers allowing Cross-Origin Resource Sharing: <code>res.header("Access-Control-Allow-Origin", "*");</code> </li>
+				<li>However, such a cross-domain policy includes domains that should not be trusted. Otherwise, malicious code could be remotely injected through untrustworthy websites.</li>
+				<li>This issue could be resolved by adding a whitelist of acceptable websites, or using a third-party validation tool (nowadays, they are widely included in firewalls) before resource sharing.</li>
+			</ul>
+		</li>
+
+
+	<li><span class="bold">Improper Input Validation</span>
+			<ul>
+				<li>Affects POST /submit.json API</li>
+				<li>CWE ID: 20, likelyhood of exploit is high.</li>
+				<li>Users are able to submit invalid data, like fake scores and grids, into the system. This impairs fairness and diminishes the value of the Game Center.</li>
+				<li>The user is able to put invalid scores such as -30000 into the database.
+					<div><img src="invalid-input.png" alt="invalid input example" />
+					<div><img src="invalid-input-result.png" alt="invalid input result" />
+				</li>
+				<li><b>Resolution:</b> Check the range and content type of input before insering it into the database. For example, the score cannot be under 0.</li>
+			</ul>
+		</li>
+	</ol>
+
+
+	<h2>Conclusion</h2>
+
+	<p>Although Game Center is fulfilling its functions of server-side data persistence and record sharing, its security vulnerabilities make it unsuitable to use on a broarder scale. </p>
+	<p>There are vulnerabilities that we have the capabilities and tools to solve, likeCross-Site Scripting, NoSQL Injections, and Overly Permissive Cross-domain Whitelist. However, the fact that this application allows anyone to submit data for any domain, there will always be problems with falsified user data, such as fake scores.</p>
+	<p>The best overall resolution would be to fix the listed vulnerabilities, redesign the score submission system to be with more secure authentication of data validity. Further assesments will still be required.</p>
+	</div>
+</body>
+</html>

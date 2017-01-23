@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Classic Movie</title>
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+<h1 id="title">Classic Movie</h1>
+
+<video src="https://www.cs.tufts.edu/comp/20/classic.mp4" id="classic_video" controls></video>
+<div id="movie_quotes"></div>
+
+<script>
+	vid = document.getElementById('classic_video');
+
+	/* retrieve movie quotes line by line */
+	quotes = document.getElementById('movie_quotes');
+	vid.addEventListener("timeupdate", updateQuotes, false);
+
+	function updateQuotes() {
+		var time = vid.currentTime;
+		var current_quote = "";
+		
+		/* update the quotes according to currentTime */
+		if (time <= 24) {
+			current_quote = "";
+		} else if (time > 24 && time <= 31) {
+			current_quote = "Igor: DR. FRANKENSTEIN?!?!?" ;
+		} else if (time > 31 && time <= 34.5) {
+			current_quote = "Dr. Frederick Frankenstein: Frokensteen.";
+		} else if (time > 34.5 && time <= 36) {
+			current_quote = "Igor: You're putting me on." ;
+		} else if (time > 36 && time <= 39) {
+			current_quote = "Dr. Frederick Frankenstein: No, it pronounced, \"Frokensteen\" " ;
+		} else if (time > 39 && time <= 42) {
+			current_quote = "Igor: Do you also say Froaderick?" ;
+		} else if (time > 42 && time <= 44) {
+			current_quote = "Dr. Frederick Frankenstein: No . . . \"Frederick.\"";
+		} else if (time > 44 && time <= 47) {
+			current_quote = "Igor: Well, why isn\'t it \'Froaderick Frokensteen.\'?";
+		} else if (time > 47 && time <= 50) {
+			current_quote = "Dr. Frederick Frankenstein: It isn't, it's \"Frederick Frokensteen\"";
+		} else if (time > 50 && time <= 52) {
+			current_quote = "Igor: I see.";
+		} else if (time > 52 && time <= 53) {
+			current_quote = "Dr. Frederick Frankenstein: You must be Igor. [He pronounces it ee-gor.]";
+		} else if (time > 53 && time <= 55) {
+			current_quote = "Igor: No, it's pronounced \"eye-gor.\"";
+		} else if (time > 55 && time <= 57) {
+			current_quote = "[Igor smiles]";
+		} else if (time > 57 && time <= 58.5) {
+			current_quote = "Dr. Frederick Frankenstein: But they told me it was \"ee-gor\"...";
+		} else if (time > 58.5 && time <= 61) {
+			current_quote = "Igor: Well, they were wrong then, weren't they?";
+		} else if (time > 61 && time <= 64) {
+			current_quote = "Dr. Frederick Frankenstein: Uh, you were sent here by Herr Falkstein, weren\'t you?";
+		} else if (time > 64 && time <= 68) {
+			current_quote = "Igor: Yes. My grandfather used to work for your grandfather.";
+		} else if (time > 68 && time <= 71) {
+			current_quote = "[Dr. Frankenstein smiles awkwardly]";
+		} else if (time > 71 && time <= 72) {
+			current_quote = "Dr. Frederick Frankenstein: How nice.";
+		} else if (time > 72 && time <= 74) {
+			current_quote = "Igor: Of course the rates have gone up.";
+		} else if (time > 74 && time <= 88) {
+			current_quote = "Dr. Frederick Frankenstein: Of course, of course, I\'m sure we\'ll get along splendidly. Oh, I uh, you know I don\'t mean to embarrass you, but I\'m a rather brilliant surgeon. Perhaps I could help you with that hump.";
+		} else if (time > 89) {
+			current_quote = "Igor: What hump?" ;
+		}
+		/* update quote displayed on webpage */
+		quotes.innerHTML = current_quote;
+	}
+
+</script>
+</body>
+</html>	

@@ -1,0 +1,15 @@
+h1, h3 {
+
+    text-align: center;
+    font-family: "Book Antiqua", Palatino, "Palatino Linotype", "Palatino LT STD", Georgia, serif;
+
+}
+
+#log {
+	font-family: "Book Antiqua", Palatino, "Palatino Linotype", "Palatino LT STD", Georgia, serif;
+    border: 1px dotted black;
+    width: 50%;
+    text-align: center;
+    margin-left: 25%;
+
+}

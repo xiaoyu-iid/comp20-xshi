@@ -1,0 +1,22 @@
+#classic_video {
+    margin: 0 auto;
+	display: block;
+    border: 3px solid #bbbbbb;
+    padding: 20px;
+}
+
+#movie_quotes {
+	text-align: center;
+	font-family: Georgia, serif;
+    font-size: large;
+
+    margin: 0 auto;
+    display: block;
+    padding: 10px;
+    width: 55%;
+}
+
+h1 {
+	 text-align: center;
+	 font-size: xx-large;
+}
